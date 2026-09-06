@@ -12,9 +12,10 @@
 
 ## 문서 목록
 
-- [2년차 개발자 학습 가이드](./02-year-developer.md)
-- [5년차 개발자 학습 가이드](./05-year-developer.md)
-- [10년차 개발자 학습 가이드](./10-year-developer.md)
+- [2년차 개발자 학습 가이드](Phase0-02-year-developer.md)
+- [2년차 완료 기준 상세 답안](Phase0-02-year-developer-detailed-answers.md)
+- [5년차 개발자 학습 가이드](Phase0-05-year-developer.md)
+- [10년차 개발자 학습 가이드](Phase0-10-year-developer.md)
 
 ## 현재 프로젝트의 출발점
 
@@ -72,4 +73,3 @@ DB 장애처럼 실제 운영에서 발생할 실패를 반복 가능하게 재�
 
 다음 단계 기능을 미리 구현하지 않는다. 현재 단계에서 의도적으로 실패해야 하는
 동작은 실패하도록 두고, 이를 테스트나 재현 스크립트로 고정한다.
-

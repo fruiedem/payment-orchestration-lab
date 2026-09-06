@@ -334,6 +334,9 @@ Webhook은 중복되거나 생성 순서와 다른 순서로 도착할 수 있�
 
 다음 질문에 코드와 실행 결과를 근거로 답할 수 있어야 한다.
 
+각 질문의 저장소 코드 근거와 2026-09-06 실행 결과는
+[2년차 완료 기준 상세 답안](Phase0-02-year-developer-detailed-answers.md)에 정리한다.
+
 - application 컨테이너는 PostgreSQL을 왜 `localhost`가 아닌 `postgres`로 찾는가?
 - DB 데이터를 유지하는 container와 volume의 차이는 무엇인가?
 - Flyway가 이미 적용한 파일을 왜 수정하면 안 되는가?
@@ -342,4 +345,3 @@ Webhook은 중복되거나 생성 순서와 다른 순서로 도착할 수 있�
 - application validation과 DB constraint는 어떻게 다른가?
 - timeout을 결제 실패로 단정하면 어떤 중복 결제가 발생할 수 있는가?
 - 실행한 명령과 실제 테스트 결과를 재현 가능하게 제시할 수 있는가?
-

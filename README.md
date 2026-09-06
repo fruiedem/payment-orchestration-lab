@@ -1,6 +1,6 @@
 # Payment Orchestration Lab
 
-외부 결제 장애, 재시도, 상태 수렴, 동시성 문제를 단계적으로 재현하기 위한 백엔드 실험 환경이다. 현재 bootstrap 단계에는 PostgreSQL 연결, Flyway migration, health endpoint, integration test만 포함한다. 주문 및 결제 비즈니스 기능은 의도적으로 구현하지 않았다.
+외부 결제 장애, 재시도, 상태 수렴, 동시성 문제를 단계적으로 재현하기 위한 백엔드 실험 환경이다. 현재 Phase 1은 주문 생성, 재고 차감, Fake PG 승인을 하나의 DB transaction으로 묶은 의도적으로 잘못된 구조다. 해결책이 아니라 slow PG가 lock과 connection을 오래 점유하는 실패를 관찰한다.
 
 ## 필요 도구
 
@@ -37,7 +37,26 @@ docker compose --env-file .env.example down --volumes
 docker compose --env-file .env.example --profile test run --build --rm test
 ```
 
-테스트는 PostgreSQL 연결, Flyway V1 성공, `payment_orchestration` 스키마 생성, application health endpoint를 검증한다. 테스트 후 실행 중인 DB를 정리하려면 `docker compose --env-file .env.example down`을 실행한다.
+테스트는 PostgreSQL/Flyway/health와 Phase 1의 정상 승인, timeout `UNKNOWN`, HTTP 500 rollback, 동일 상품 동시 주문을 검증한다. 테스트 후 실행 중인 DB를 정리하려면 `docker compose --env-file .env.example down`을 실행한다.
+
+## Phase 1 API와 재현
+
+재고를 준비한 뒤 주문한다.
+
+```http
+PUT /api/lab/stock
+{"sku":"sku-1","stock":2}
+
+POST /api/orders
+{"sku":"sku-1","quantity":1,"amount":1000,"gatewayMode":"DELAY_3S"}
+```
+
+`gatewayMode`는 `NORMAL`, `DELAY_3S`, `DELAY_10S`, `TIMEOUT`, `ERROR_500` 중 하나다.
+동시 주문과 지표 샘플링은 다음 명령으로 재현한다.
+
+```powershell
+.\scripts\reproduce\phase1-slow-pg-lock.ps1
+```
 
 ## 환경 변수와 secret
 
@@ -72,15 +91,16 @@ docker compose --env-file .env.example --profile test run --build --rm test
 - Compose가 PostgreSQL 준비 완료 후 application/test를 시작한다.
 - 애플리케이션 시작 시 Flyway가 migration을 적용한다.
 - Integration test가 mock DB가 아닌 PostgreSQL에 접속한다.
-- 비즈니스 테이블을 만들지 않으므로 재고 및 결제 관련 불변식은 아직 적용 대상이 아니다.
+- DB `CHECK (stock >= 0)`와 상품 행 잠금으로 재고가 음수가 되지 않는다.
+- partial unique index로 주문별 `SUCCESS` 결제는 최대 하나다.
+- timeout은 `FAILED`가 아니라 `UNKNOWN`으로 기록한다.
 
 ## 현재 구현하지 않은 기능
 
-- Order, Inventory, Payment, Refund 도메인과 API
-- PG 연동, webhook, timeout/UNKNOWN 처리
 - idempotency와 상태 전이 규칙
 - outbox, reconciliation, admin/operations
-- 동시성·장애·성능 시나리오 및 재현 스크립트
+- 실제 PG 연동, webhook, refund
+- `PENDING`/`UNKNOWN` 자동 수렴
 - 복수 애플리케이션 인스턴스 검증
 
 위 항목은 해당 Phase의 acceptance criteria와 불변식을 먼저 정의한 뒤 단계별로 추가한다.
